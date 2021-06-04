@@ -1,6 +1,6 @@
-import http from 'https://unpkg.com/isomorphic-git@beta/http/web/index.js' // Initialize isomorphic-git with a file system
+import http from 'https://unpkg.com/isomorphic-git@beta/http/web/index.js'
 
-window.fs = new LightningFS('fs') // I prefer using the Promisified version honestly
+window.fs = new LightningFS('fs')
 async function SetUpFilesystem() {
   window.pfs = window.fs.promises
 
@@ -13,10 +13,22 @@ async function SetUpFilesystem() {
   }
   // Behold - it is empty!
   await pfs.readdir(dir);
-}
-SetUpFilesystem()
+  await git.clone({
+    fs,
+    http,
+    dir,
+    corsProxy: 'https://cors.isomorphic-git.org',
+    url: 'https://github.com/isomorphic-git/isomorphic-git',
+    ref: 'main',
+    singleBranch: true,
+    depth: 2
+  });
 
-function SetUpBrowser() {
+  // Now it should not be empty...
+  return await pfs.readdir(dir);
+}
+
+function SetUpBrowser(data) {
 
   require.config({ paths: { 'vs': 'https://unpkg.com/monaco-editor@latest/min/vs' } });
   window.MonacoEnvironment = { getWorkerUrl: () => proxy };
@@ -30,10 +42,7 @@ function SetUpBrowser() {
 
   require(["vs/editor/editor.main"], function () {
     let editor = monaco.editor.create(document.getElementById('container'), {
-      value: [
-        'function x() {',
-        '\tconsole.log("Hello world!");',
-        '}'
+      value: [data
       ].join('\n'),
       language: 'javascript',
       theme: 'vs-dark'
@@ -41,3 +50,11 @@ function SetUpBrowser() {
   });
 
 }
+
+async function setUpEverything() {
+  var data = await SetUpFilesystem()
+  console.log(data);
+  SetUpBrowser(data)
+}
+
+setUpEverything()
