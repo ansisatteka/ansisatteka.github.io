@@ -54,16 +54,18 @@ function setUpEditor(data) {
 }
 
 async function setUpExplorer(explorer, pfs, path) {
-  var ret1 = await pfs.readdir(path);
-  for (var el of ret1) {
-    var ret2 = await pfs.stat(path + el);
-    var entry = document.createElement('div');
-    var fp = path+el;
+  let ret1 = await pfs.readdir(path);
+
+  for (let el of ret1) {
+    let ret2 = await pfs.stat(path + el);
+    let entry = document.createElement('div');
+    let fp = path + el;
+
     entry.innerHTML = fp;
     entry.addEventListener("click", async function () {
       console.log(fp)
-      var contents = await pfs.readFile(fp, { encoding: "utf8" })
-      var model = monaco.editor.createModel(contents);
+      let contents = await pfs.readFile(fp, { encoding: "utf8" })
+      let model = monaco.editor.createModel(contents);
 
       editor.setModel(model);
 
@@ -77,7 +79,7 @@ async function setUpExplorer(explorer, pfs, path) {
 }
 
 async function setUpEverything() {
-  var pfs = await SetUpFilesystem()
+  let pfs = await SetUpFilesystem()
   setUpExplorer(document.getElementById("explorer"), pfs, "/");
   setUpEditor("click on a file")
 }

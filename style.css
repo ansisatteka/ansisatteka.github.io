@@ -17,5 +17,5 @@
 	overflow: hidden;
 }
 #explorer {
-
+  overflow-y: auto;
 }
