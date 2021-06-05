@@ -7,7 +7,7 @@ async function SetUpFilesystem() {
   window.fs = new LightningFS('fs')
   window.pfs = window.fs.promises
 
-  window.dir = '/SmolNoob7341.github.io.git'
+  window.dir = '/ansisatteka.github.io.git'
   try {
     await pfs.mkdir(dir);
   } catch (e) {
@@ -20,11 +20,11 @@ async function SetUpFilesystem() {
     http,
     dir,
     corsProxy: 'https://cors.isomorphic-git.org',
-    url: 'https://github.com/SmolNoob7341/SmolNoob7341.github.io.git',
-    ref: 'SmolNoob',
+    url: 'https://github.com/ansisatteka/ansisatteka.github.io.git',
+    ref: 'master',
     singleBranch: true,
-    depth: 4
   });
+
 
   // Now it should not be empty...
   return pfs;
@@ -60,14 +60,44 @@ async function setUpExplorer(explorer, pfs, path) {
     let ret2 = await pfs.stat(path + el);
     let entry = document.createElement('div');
     let fp = path + el;
-
+    let oldContent = ""
     entry.innerHTML = fp;
     entry.addEventListener("click", async function () {
-      console.log(fp)
-      document.getElementById("openFiles").innerHTML = fp
 
+      let sha = await git.resolveRef({ fs, dir: '/ansisatteka.github.io.git', ref: 'master' })
+      console.log(sha)
+      let commit = await git.readCommit({ fs, dir: '/ansisatteka.github.io.git', oid: sha })
+      console.log(commit.commit.tree)
+      let tree = await git.readObject({
+        fs,
+        dir: '/ansisatteka.github.io.git',
+        oid: commit.commit.tree
+      })
+      let blob = tree.object.entries.find(b => b.path == el) //TODO: could be undefined
+      if (blob) {
+        let b = await git.readObject({
+          fs,
+          dir: '/ansisatteka.github.io.git',
+          oid: blob.oid
+        })
+        oldContent = new TextDecoder().decode(b.object);
+      }
+
+      console.log(oldContent)
+
+      document.getElementById("openFiles").innerHTML = fp
       let contents = await pfs.readFile(fp, { encoding: "utf8" })
-      let model = monaco.editor.createModel(contents, "javascript");
+
+      let lang = "javascript";
+      if (el.endsWith(".js")) {
+        lang = "javascript";
+      } else if (el.endsWith(".css")) {
+        lang = "css";
+      } else if (el.endsWith(".html")) {
+        lang = "html";
+      }
+      
+      let model = monaco.editor.createModel(contents, lang);
 
       editor.setModel(model);
 
