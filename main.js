@@ -1,11 +1,13 @@
 import http from 'https://unpkg.com/isomorphic-git@beta/http/web/index.js'
 
-window.fs = new LightningFS('fs')
+var editor = null;
+
+
 async function SetUpFilesystem() {
+  window.fs = new LightningFS('fs')
   window.pfs = window.fs.promises
 
-  window.dir = '/tutorial'
-  console.log(dir);
+  window.dir = '/SmolNoob7341.github.io.git'
   try {
     await pfs.mkdir(dir);
   } catch (e) {
@@ -18,17 +20,17 @@ async function SetUpFilesystem() {
     http,
     dir,
     corsProxy: 'https://cors.isomorphic-git.org',
-    url: 'https://github.com/isomorphic-git/isomorphic-git',
-    ref: 'main',
+    url: 'https://github.com/SmolNoob7341/SmolNoob7341.github.io.git',
+    ref: 'SmolNoob',
     singleBranch: true,
-    depth: 2
+    depth: 4
   });
 
   // Now it should not be empty...
-  return await pfs.readdir(dir);
+  return pfs;
 }
 
-function SetUpBrowser(data) {
+function setUpEditor(data) {
 
   require.config({ paths: { 'vs': 'https://unpkg.com/monaco-editor@latest/min/vs' } });
   window.MonacoEnvironment = { getWorkerUrl: () => proxy };
@@ -41,7 +43,7 @@ function SetUpBrowser(data) {
   `], { type: 'text/javascript' }));
 
   require(["vs/editor/editor.main"], function () {
-    let editor = monaco.editor.create(document.getElementById('container'), {
+    editor = monaco.editor.create(document.getElementById('container'), {
       value: [data
       ].join('\n'),
       language: 'javascript',
@@ -51,10 +53,33 @@ function SetUpBrowser(data) {
 
 }
 
+async function setUpExplorer(explorer, pfs, path) {
+  var ret1 = await pfs.readdir(path);
+  for (var el of ret1) {
+    var ret2 = await pfs.stat(path + el);
+    var entry = document.createElement('div');
+    var fp = path+el;
+    entry.innerHTML = fp;
+    entry.addEventListener("click", async function () {
+      console.log(fp)
+      var contents = await pfs.readFile(fp, { encoding: "utf8" })
+      var model = monaco.editor.createModel(contents);
+
+      editor.setModel(model);
+
+    });
+    explorer.appendChild(entry);
+    if (ret2.type == "dir") {
+      await setUpExplorer(explorer, pfs, path + el + "/");
+    }
+
+  }
+}
+
 async function setUpEverything() {
-  var data = await SetUpFilesystem()
-  console.log(data);
-  SetUpBrowser(data)
+  var pfs = await SetUpFilesystem()
+  setUpExplorer(document.getElementById("explorer"), pfs, "/");
+  setUpEditor("click on a file")
 }
 
 setUpEverything()
