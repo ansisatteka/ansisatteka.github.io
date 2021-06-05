@@ -64,6 +64,8 @@ async function setUpExplorer(explorer, pfs, path) {
     entry.innerHTML = fp;
     entry.addEventListener("click", async function () {
       console.log(fp)
+      document.getElementById("openFiles").innerHTML = fp
+
       let contents = await pfs.readFile(fp, { encoding: "utf8" })
       let model = monaco.editor.createModel(contents, "javascript");
 
