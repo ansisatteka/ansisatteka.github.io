@@ -43,11 +43,13 @@ function setUpEditor(data) {
   `], { type: 'text/javascript' }));
 
   require(["vs/editor/editor.main"], function () {
-    editor = monaco.editor.create(document.getElementById('container'), {
+    editor = monaco.editor.createDiffEditor(document.getElementById('container'), {
       value: [data
       ].join('\n'),
       language: 'javascript',
-      theme: 'vs-dark'
+      theme: 'vs-dark',
+      renderSideBySide: false
+
     });
   });
 
@@ -96,18 +98,21 @@ async function setUpExplorer(explorer, pfs, path) {
       } else if (el.endsWith(".html")) {
         lang = "html";
       }
-      
+
+      let old_model = monaco.editor.createModel(oldContent, lang);
       let model = monaco.editor.createModel(contents, lang);
 
-      editor.setModel(model);
+      editor.setModel({
+        original: old_model,
+        modified: model});
 
-    });
-    explorer.appendChild(entry);
-    if (ret2.type == "dir") {
-      await setUpExplorer(explorer, pfs, path + el + "/");
-    }
-
+  });
+  explorer.appendChild(entry);
+  if (ret2.type == "dir") {
+    await setUpExplorer(explorer, pfs, path + el + "/");
   }
+
+}
 }
 
 async function setUpEverything() {
