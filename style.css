@@ -14,10 +14,19 @@
   margin: 0;
 }
 
-#openFiles {
+#openFilesContainer {
   overflow: hidden;
+  background-color: rgb(50,50,50)
 
+  
 }
+
+#openFileActive {
+  cursor: pointer;
+  background-color: rgb(30,30,30);
+  color: rgb(200,200,200);
+}
+
 
 #container {
 	overflow: hidden;

@@ -59,6 +59,7 @@ async function setUpExplorer(explorer, pfs, path) {
   let ret1 = await pfs.readdir(path);
 
   for (let el of ret1) {
+    if (el ==".git") continue;
     let ret2 = await pfs.stat(path + el);
     let entry = document.createElement('div');
     let fp = path + el;
@@ -87,7 +88,7 @@ async function setUpExplorer(explorer, pfs, path) {
 
       console.log(oldContent)
 
-      document.getElementById("openFiles").innerHTML = fp
+      document.getElementById("openFileActive").innerHTML = fp
       let contents = await pfs.readFile(fp, { encoding: "utf8" })
 
       let lang = "javascript";
