@@ -70,16 +70,19 @@ async function editorUpdateData() {
   });
 }
 
-var activeFiles = {};
+
+var openFilesContainer = document.getElementById("openFilesContainer")
+var activeFiles = new Map()
 var activeFile = ""
+
+
+async function activeFileFocus() {
+
+}
 
 async function activeFileOpen(path, file) {
   let fullPath = path + file;
   let oldContent = ""
-
-  if (fullPath in activeFiles) {
-    //Only change editor
-  }
 
   let sha = await git.resolveRef({ fs, dir: '/ansisatteka.github.io.git', ref: 'master' })
   console.log(sha)
@@ -102,7 +105,6 @@ async function activeFileOpen(path, file) {
 
   console.log(oldContent)
 
-  document.getElementById("openFileActive").innerHTML = fullPath
   let contents = await pfs.readFile(fullPath, { encoding: "utf8" })
 
   let lang = "javascript";
@@ -115,6 +117,7 @@ async function activeFileOpen(path, file) {
   }
   //updateEditor(path, el);
 
+
   let old_model = monaco.editor.createModel(oldContent, lang);
   let model = monaco.editor.createModel(contents, lang);
 
@@ -124,20 +127,36 @@ async function activeFileOpen(path, file) {
   });
 
 
-  document.getElementById("openFileActive").addEventListener("dblclick", function () {
-    console.log("writing contents to filesystem")
-    pfs.writeFile(fullPath, model.getValue())
-  })
+  if (!activeFiles.has(fullPath)) {
+    let newTab = document.createElement("div")
+
+    newTab.innerHTML = fullPath;
+    newTab.className = "openFile";
+
+    newTab.addEventListener("dblclick", function () {
+      pfs.writeFile(fullPath, model.getValue())
+      openFilesContainer.removeChild(newTab);
+      activeFiles.delete(fullPath)
+    })
+    newTab.addEventListener("click", function () {
+      editor.setModel({
+        original: old_model,
+        modified: model
+      });
+    })
+
+    openFilesContainer.appendChild(newTab);
+    activeFiles.set(fullPath, {})
+  }
+
+
+
 
 
 }
 
 function activeFileClose(path, file) {
-  let fullPath = path + file;
 
-  if (fullPath in activeFiles) {
-    //Only close if open
-  }
 
 
 }
@@ -145,9 +164,6 @@ function activeFileClose(path, file) {
 function activFileSwitchMode(path, file) {
   let fullPath = path + file;
 
-  if (fullPath in activeFiles) {
-    //Only close if open
-  }
 }
 
 async function fileExplorerInit(explorer, path) {

@@ -16,17 +16,23 @@
 
 #openFilesContainer {
   overflow: hidden;
+  display: flex;
   background-color: rgb(50,50,50)
 
   
 }
 
-#openFileActive {
+.openFile {
   display: inline-block;
+  color: gray;
+  padding-right: 3em;
+}
+
+#openFileActive {
   cursor: pointer;
   height: 1.5em;
   background-color: rgb(30,30,30);
-  color: rgb(200,200,200);
+  color: white;
 }
 
 
