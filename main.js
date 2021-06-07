@@ -77,10 +77,6 @@ var activeFiles = new Map()
 var activeFile = ""
 
 
-async function activeFileFocus() {
-
-}
-
 async function activeFileOpen(path, file) {
   let fullPath = path + file;
   let oldContent = ""
@@ -174,21 +170,6 @@ async function activeFileOpen(path, file) {
     activeTab = elem;
     elem.id = "openFileActive";
   }
-
-
-
-
-
-}
-
-function activeFileClose(path, file) {
-
-
-
-}
-
-function activFileSwitchMode(path, file) {
-  let fullPath = path + file;
 
 }
 
