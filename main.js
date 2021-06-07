@@ -30,7 +30,7 @@ async function SetUpFilesystem() {
   return pfs;
 }
 
-function setUpEditor(data) {
+function editorInit(explorer, data) {
 
   require.config({ paths: { 'vs': 'https://unpkg.com/monaco-editor@latest/min/vs' } });
   window.MonacoEnvironment = { getWorkerUrl: () => proxy };
@@ -43,83 +43,146 @@ function setUpEditor(data) {
   `], { type: 'text/javascript' }));
 
   require(["vs/editor/editor.main"], function () {
-    editor = monaco.editor.createDiffEditor(document.getElementById('container'), {
-      value: [data
-      ].join('\n'),
+    editor = monaco.editor.createDiffEditor(explorer, {
+      value: [data].join('\n'),
       language: 'javascript',
       theme: 'vs-dark',
       renderSideBySide: false
-
     });
   });
 
 }
 
-async function setUpExplorer(explorer, pfs, path) {
+async function editorUpdateData() {
+  let lang = "javascript";
+  if (file.endsWith(".js")) {
+    lang = "javascript";
+  } else if (file.endsWith(".css")) {
+    lang = "css";
+  } else if (file.endsWith(".html")) {
+    lang = "html";
+  }
+  //updateEditor(path, el);
+
+  let old_model = monaco.editor.createModel(oldContent, lang);
+  let model = monaco.editor.createModel(contents, lang);
+
+  editor.setModel({
+    original: old_model,
+    modified: model
+  });
+}
+
+var activeFiles = {};
+var activeFile = ""
+
+async function activeFileOpen(path, file) {
+  let fullPath = path + file;
+  let oldContent = ""
+
+  if (fullPath in activeFiles) {
+    //Only change editor
+  }
+
+  let sha = await git.resolveRef({ fs, dir: '/ansisatteka.github.io.git', ref: 'master' })
+  console.log(sha)
+  let commit = await git.readCommit({ fs, dir: '/ansisatteka.github.io.git', oid: sha })
+  console.log(commit.commit.tree)
+  let tree = await git.readObject({
+    fs,
+    dir: '/ansisatteka.github.io.git',
+    oid: commit.commit.tree
+  })
+  let blob = tree.object.entries.find(b => b.path == file) //TODO: could be undefined
+  if (blob) {
+    let b = await git.readObject({
+      fs,
+      dir: '/ansisatteka.github.io.git',
+      oid: blob.oid
+    })
+    oldContent = new TextDecoder().decode(b.object);
+  }
+
+  console.log(oldContent)
+
+  document.getElementById("openFileActive").innerHTML = fullPath
+  let contents = await pfs.readFile(fullPath, { encoding: "utf8" })
+
+  let lang = "javascript";
+  if (file.endsWith(".js")) {
+    lang = "javascript";
+  } else if (file.endsWith(".css")) {
+    lang = "css";
+  } else if (file.endsWith(".html")) {
+    lang = "html";
+  }
+  //updateEditor(path, el);
+
+  let old_model = monaco.editor.createModel(oldContent, lang);
+  let model = monaco.editor.createModel(contents, lang);
+
+  editor.setModel({
+    original: old_model,
+    modified: model
+  });
+
+
+  document.getElementById("openFileActive").addEventListener("dblclick", function () {
+    console.log("writing contents to filesystem")
+    pfs.writeFile(fullPath, model.getValue())
+  })
+
+
+}
+
+function activeFileClose(path, file) {
+  let fullPath = path + file;
+
+  if (fullPath in activeFiles) {
+    //Only close if open
+  }
+
+
+}
+
+function activFileSwitchMode(path, file) {
+  let fullPath = path + file;
+
+  if (fullPath in activeFiles) {
+    //Only close if open
+  }
+}
+
+async function fileExplorerInit(explorer, path) {
   let ret1 = await pfs.readdir(path);
 
   for (let el of ret1) {
-    if (el ==".git") continue;
-    let ret2 = await pfs.stat(path + el);
+    /* Ignore GIT internal directories */
+    if (el == ".git") {
+      continue;
+    }
+
+    let fullPath = path + el
+    let ret2 = await pfs.stat(fullPath);
+
     let entry = document.createElement('div');
-    let fp = path + el;
-    let oldContent = ""
-    entry.innerHTML = fp;
+    entry.innerHTML = fullPath;
     entry.addEventListener("click", async function () {
+      activeFileOpen(path, el);
+    });
+    explorer.appendChild(entry);
+    /* Recursively go into child directories */
+    if (ret2.type == "dir") {
+      await fileExplorerInit(explorer, fullPath + "/");
+    }
 
-      let sha = await git.resolveRef({ fs, dir: '/ansisatteka.github.io.git', ref: 'master' })
-      console.log(sha)
-      let commit = await git.readCommit({ fs, dir: '/ansisatteka.github.io.git', oid: sha })
-      console.log(commit.commit.tree)
-      let tree = await git.readObject({
-        fs,
-        dir: '/ansisatteka.github.io.git',
-        oid: commit.commit.tree
-      })
-      let blob = tree.object.entries.find(b => b.path == el) //TODO: could be undefined
-      if (blob) {
-        let b = await git.readObject({
-          fs,
-          dir: '/ansisatteka.github.io.git',
-          oid: blob.oid
-        })
-        oldContent = new TextDecoder().decode(b.object);
-      }
-
-      console.log(oldContent)
-
-      document.getElementById("openFileActive").innerHTML = fp
-      let contents = await pfs.readFile(fp, { encoding: "utf8" })
-
-      let lang = "javascript";
-      if (el.endsWith(".js")) {
-        lang = "javascript";
-      } else if (el.endsWith(".css")) {
-        lang = "css";
-      } else if (el.endsWith(".html")) {
-        lang = "html";
-      }
-
-      let old_model = monaco.editor.createModel(oldContent, lang);
-      let model = monaco.editor.createModel(contents, lang);
-
-      editor.setModel({
-        original: old_model,
-        modified: model});
-
-  });
-  explorer.appendChild(entry);
-  if (ret2.type == "dir") {
-    await setUpExplorer(explorer, pfs, path + el + "/");
   }
-
-}
 }
 
 async function setUpEverything() {
-  let pfs = await SetUpFilesystem()
-  setUpExplorer(document.getElementById("explorer"), pfs, "/");
-  setUpEditor("click on a file")
+  await SetUpFilesystem()
+  fileExplorerInit(document.getElementById("explorer"), "/");
+  editorInit(document.getElementById('container'), "click on a file")
 }
 
 setUpEverything()
