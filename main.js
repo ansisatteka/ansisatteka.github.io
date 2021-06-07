@@ -150,12 +150,21 @@ async function activeFileOpen(path, file) {
         modified: model
       });
     })
-    if (!activeTab) {
-      activeTab = newTab;
-      newTab.id = "openFileActive";
-    }
+
     openFilesContainer.appendChild(newTab);
-    activeFiles.set(fullPath, {})
+    activeFiles.set(fullPath, { elem: newTab })
+    if (activeTab) {
+      activeTab.id = ""
+    }
+    activeTab = newTab;
+    newTab.id = "openFileActive";
+  } else {
+    let elem = activeFiles.get(fullPath).elem
+    if (activeTab) {
+      activeTab.id = ""
+    }
+    activeTab = elem;
+    elem.id = "openFileActive";
   }
 
 
