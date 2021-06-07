@@ -50,27 +50,6 @@ function editorInit(explorer, data) {
 
 }
 
-async function editorUpdateData() {
-  let lang = "javascript";
-  if (file.endsWith(".js")) {
-    lang = "javascript";
-  } else if (file.endsWith(".css")) {
-    lang = "css";
-  } else if (file.endsWith(".html")) {
-    lang = "html";
-  }
-  //updateEditor(path, el);
-
-  let old_model = monaco.editor.createModel(oldContent, lang);
-  let model = monaco.editor.createModel(contents, lang);
-
-  editor.setModel({
-    original: old_model,
-    modified: model
-  });
-}
-
-
 var openFilesContainer = document.getElementById("openFilesContainer")
 var activeTab = null;
 var activeFiles = new Map()
