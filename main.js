@@ -1,6 +1,9 @@
 import http from 'https://unpkg.com/isomorphic-git@beta/http/web/index.js'
 
-var editor = null;
+import { getGitVersion } from "./modules/git.js"
+import { editorInit, editorRefocus, activeFiles } from "./modules/editor.js"
+import {fileExplorerInit} from "./modules/explorer.js"
+
 
 async function SetUpFilesystem() {
   window.fs = new LightningFS('fs')
@@ -26,33 +29,9 @@ async function SetUpFilesystem() {
 
 }
 
-function editorInit(explorer, data) {
 
-  require.config({ paths: { 'vs': 'https://unpkg.com/monaco-editor@latest/min/vs' } });
-  window.MonacoEnvironment = { getWorkerUrl: () => proxy };
-
-  let proxy = URL.createObjectURL(new Blob([`
-    self.MonacoEnvironment = {
-      baseUrl: 'https://unpkg.com/monaco-editor@latest/min/'
-    };
-    importScripts('https://unpkg.com/monaco-editor@latest/min/vs/base/worker/workerMain.js');
-  `], { type: 'text/javascript' }));
-
-  require(["vs/editor/editor.main"], function () {
-    editor = monaco.editor.createDiffEditor(explorer, {
-      value: [data].join('\n'),
-      language: 'javascript',
-      theme: 'vs-dark',
-      renderSideBySide: false
-    });
-  });
-
-}
 
 var openFilesContainer = document.getElementById("openFilesContainer")
-var activeTab = null;
-var activeFiles = new Map()
-var activeFile = ""
 
 
 function getLangFromFile(file) {
@@ -66,40 +45,8 @@ function getLangFromFile(file) {
   return "text";
 }
 
-async function getGitVersion(file) {
-  let oldContent = ""
-  let sha = await git.resolveRef({ fs, dir: '/ansisatteka.github.io.git', ref: 'master' })
-  let commit = await git.readCommit({ fs, dir: '/ansisatteka.github.io.git', oid: sha })
-  let tree = await git.readObject({
-    fs,
-    dir: '/ansisatteka.github.io.git',
-    oid: commit.commit.tree
-  })
-  let blob = tree.object.entries.find(b => b.path == file) //TODO: could be undefined
-  if (blob) {
-    let b = await git.readObject({
-      fs,
-      dir: '/ansisatteka.github.io.git',
-      oid: blob.oid
-    })
-    oldContent = new TextDecoder().decode(b.object);
-  }
-  return oldContent;
-}
 
-function editorRefocus(ttt) {
-  if (activeTab) {
-    activeTab.elem.id = ""
-  }
 
-  activeTab = ttt;
-  ttt.elem.id = "openFileActive";
-
-  editor.setModel({
-    original: ttt.old_model,
-    modified: ttt.model
-  });
-}
 
 async function activeFileOpen(path, file) {
   let fullPath = path + file;
@@ -148,37 +95,9 @@ async function activeFileOpen(path, file) {
 
 }
 
-async function fileExplorerInit(explorer, path) {
-  let files = await pfs.readdir(path);
-
-  for (let file of files) {
-    /* Ignore GIT internal directories */
-    if (file == ".git") {
-      continue;
-    }
-
-    let fullPath = path + file
-    let finfo = await pfs.stat(fullPath);
-
-    let entry = document.createElement('div');
-    entry.innerHTML = fullPath;
-    if (finfo.type == "file") {
-      entry.addEventListener("click", async function () {
-        activeFileOpen(path, file);
-      });
-    }
-    explorer.appendChild(entry);
-    /* Recursively go into child directories */
-    if (finfo.type == "dir") {
-      await fileExplorerInit(explorer, fullPath + "/");
-    }
-
-  }
-}
-
 async function setUpEverything() {
   await SetUpFilesystem()
-  fileExplorerInit(document.getElementById("explorer"), "/");
+  fileExplorerInit(document.getElementById("explorer"), "/", activeFileOpen);
   editorInit(document.getElementById('container'), "click on a file")
 }
 
