@@ -25,9 +25,6 @@ async function SetUpFilesystem() {
     singleBranch: true,
   });
 
-
-  // Now it should not be empty...
-  return pfs;
 }
 
 function editorInit(explorer, data) {
@@ -167,9 +164,11 @@ async function fileExplorerInit(explorer, path) {
 
     let entry = document.createElement('div');
     entry.innerHTML = fullPath;
-    entry.addEventListener("click", async function () {
-      activeFileOpen(path, el);
-    });
+    if (ret2.type == "file") {
+      entry.addEventListener("click", async function () {
+        activeFileOpen(path, el);
+      });
+    }
     explorer.appendChild(entry);
     /* Recursively go into child directories */
     if (ret2.type == "dir") {
