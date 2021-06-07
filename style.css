@@ -23,9 +23,9 @@
 }
 
 .openFile {
-  display: inline-block;
+  display: flex;
   color: gray;
-  padding-right: 3em;
+  padding-right: 1em;
 }
 
 #openFileActive {

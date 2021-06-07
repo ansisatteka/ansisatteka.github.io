@@ -130,16 +130,15 @@ async function activeFileOpen(path, file) {
 
   if (!activeFiles.has(fullPath)) {
     let newTab = document.createElement("div")
+    let fileSpan = document.createElement("span")
 
-    newTab.innerHTML = fullPath;
+    fileSpan.innerHTML = fullPath;
+
     newTab.className = "openFile";
 
-    newTab.addEventListener("dblclick", function () {
-      pfs.writeFile(fullPath, model.getValue())
-      openFilesContainer.removeChild(newTab);
-      activeFiles.delete(fullPath)
-    })
-    newTab.addEventListener("click", function () {
+
+    fileSpan.addEventListener("click", function () {
+
       if (activeTab) {
         activeTab.id = "";
       }
@@ -150,7 +149,16 @@ async function activeFileOpen(path, file) {
         modified: model
       });
     })
+    let closeButton = document.createElement("button")
+    closeButton.innerHTML = "x"
+    closeButton.addEventListener("click", function () {
+      pfs.writeFile(fullPath, model.getValue())
+      openFilesContainer.removeChild(newTab);//TODO: does this leave dangling button html element?
+      activeFiles.delete(fullPath)
+    })
+    newTab.appendChild(fileSpan)
 
+    newTab.appendChild(closeButton)
     openFilesContainer.appendChild(newTab);
     activeFiles.set(fullPath, { elem: newTab })
     if (activeTab) {
