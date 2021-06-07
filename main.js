@@ -72,6 +72,7 @@ async function editorUpdateData() {
 
 
 var openFilesContainer = document.getElementById("openFilesContainer")
+var activeTab = null;
 var activeFiles = new Map()
 var activeFile = ""
 
@@ -139,12 +140,20 @@ async function activeFileOpen(path, file) {
       activeFiles.delete(fullPath)
     })
     newTab.addEventListener("click", function () {
+      if (activeTab) {
+        activeTab.id = "";
+      }
+      activeTab = newTab;
+      newTab.id = "openFileActive";
       editor.setModel({
         original: old_model,
         modified: model
       });
     })
-
+    if (!activeTab) {
+      activeTab = newTab;
+      newTab.id = "openFileActive";
+    }
     openFilesContainer.appendChild(newTab);
     activeFiles.set(fullPath, {})
   }
