@@ -39,3 +39,7 @@
 #explorer {
   overflow-y: auto;
 }
+
+.fileExplorerEntry:hover {
+   background-color:#f0f0f0;
+}

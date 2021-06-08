@@ -1,6 +1,6 @@
 export const name = 'git';
 
-export async function getGitVersion(file) {
+export async function gitGetLastFileVersion(file) {
   let oldContent = ""
   let sha = await git.resolveRef({ fs, dir: '/ansisatteka.github.io.git', ref: 'master' })
   let commit = await git.readCommit({ fs, dir: '/ansisatteka.github.io.git', oid: sha })

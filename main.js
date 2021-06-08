@@ -1,8 +1,8 @@
 import http from 'https://unpkg.com/isomorphic-git@beta/http/web/index.js'
 
-import { getGitVersion } from "./modules/git.js"
+import { gitGetLastFileVersion } from "./modules/git.js"
 import { editorInit, editorRefocus, activeFiles } from "./modules/editor.js"
-import {fileExplorerInit} from "./modules/explorer.js"
+import { fileExplorerInit } from "./modules/explorer.js"
 
 
 async function SetUpFilesystem() {
@@ -31,7 +31,6 @@ async function SetUpFilesystem() {
 
 
 
-var openFilesContainer = document.getElementById("openFilesContainer")
 
 
 function getLangFromFile(file) {
@@ -51,10 +50,15 @@ function getLangFromFile(file) {
 async function activeFileOpen(path, file) {
   let fullPath = path + file;
 
-  if (!activeFiles.has(fullPath)) {
+  if (activeFiles.has(fullPath)) {
+    /* File is already open. Just refocus */
+
+    let ttt = activeFiles.get(fullPath)
+    editorRefocus(ttt)
+  } else {
     /* File is not yet open */
 
-    let oldContent = await getGitVersion(file)
+    let oldContent = await gitGetLastFileVersion(file)
     let contents = await pfs.readFile(fullPath, { encoding: "utf8" })
 
     let lang = getLangFromFile(file);
@@ -86,19 +90,14 @@ async function activeFileOpen(path, file) {
     openFilesContainer.appendChild(newTab);
     activeFiles.set(fullPath, ttt)
     editorRefocus(ttt)
-  } else {
-    /* File is already open. Just refocus */
-    let ttt = activeFiles.get(fullPath)
-    editorRefocus(ttt)
-
   }
 
 }
 
 async function setUpEverything() {
   await SetUpFilesystem()
-  fileExplorerInit(document.getElementById("explorer"), "/", activeFileOpen);
-  editorInit(document.getElementById('container'), "click on a file")
+  fileExplorerInit(document.getElementById("explorer"), "/", activeFileOpen, 1);
+  editorInit(document.getElementById('container'), document.getElementById("openFilesContainer"), "click on a file")
 }
 
 setUpEverything()
